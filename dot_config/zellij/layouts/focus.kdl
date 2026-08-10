@@ -1,0 +1,14 @@
+layout {
+    pane name="editor" {
+        command "nvim"
+        cwd "."
+    }
+
+    pane split_direction="vertical" {
+        pane size="30%" name="shell" {
+            command "bash"
+            cwd "."
+        }
+    }
+
+}

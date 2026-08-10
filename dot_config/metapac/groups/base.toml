@@ -1,4 +1,4 @@
-[dnf]
+[ dnf]
 packages = [
   "btop",
   "curl",
@@ -8,8 +8,10 @@ packages = [
   "jq",
   "micro",
   "neovim",
+  "tmux",
   "tree",
   "unzip",
   "vim",
   "wget",
+  "zoxide",
 ]

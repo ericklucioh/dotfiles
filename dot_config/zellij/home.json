@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "section": "Terminal",
+      "name": "Shell",
+      "command": "bash",
+      "actions": ["tab", "popup"]
+    },
+    {
+      "section": "Editor",
+      "name": "Neovim",
+      "command": "nvim",
+      "actions": ["tab", "popup"]
+    }
+  ]
+}

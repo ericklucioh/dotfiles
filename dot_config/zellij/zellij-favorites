@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+
+set -u -o pipefail
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+config_file=${ZELLIJ_HOME_CONFIG:-"$script_dir/home.json"}
+
+if ! command -v fzf >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
+    printf '\033[1;31mErro:\033[0m a home precisa de fzf e jq.\n'
+    printf '\nPressione Enter para fechar...'
+    read -r _
+    exit 1
+fi
+
+if [ ! -f "$config_file" ] || ! jq -e '.items | type == "array"' "$config_file" >/dev/null 2>&1; then
+    printf '\033[1;31mErro:\033[0m configuracao invalida: %s\n' "$config_file"
+    printf '\nPressione Enter para fechar...'
+    read -r _
+    exit 1
+fi
+
+title=$'\033[1;36m'
+section=$'\033[1;33m'
+key=$'\033[1;35m'
+dim=$'\033[2m'
+reset=$'\033[0m'
+
+fzf_options=(
+    --height=100%
+    --layout=reverse
+    --border=rounded
+    --prompt='  > '
+    --pointer='>'
+    --no-multi
+    --info=inline
+    --color='fg:#cdd6f4,bg:#1e1e2e,fg+:#f9e2af,bg+:#313244,hl:#89b4fa,prompt:#89b4fa,pointer:#f38ba8,header:#bac2de'
+)
+
+pause() {
+    printf '\n%sPressione Enter para fechar...%s' "$dim" "$reset"
+    read -r _
+}
+
+main_menu() {
+    local options=()
+    local category
+
+    while IFS= read -r category; do
+        options+=("$category")
+    done < <(jq -r '.items[].section' "$config_file" | sort -u)
+
+    options+=("Buscar tudo" "Sessoes" "Ajuda" "Editar configuracao")
+
+    printf '%sMobDesk Home%s\n' "$title" "$reset" >&2
+    printf '%s%s%s\n' "$dim" "Alt+M | selecione uma categoria ou busque tudo" "$reset" >&2
+    printf '%s\n' "${options[@]}" | fzf "${fzf_options[@]}" \
+        --border-label=' Home ' \
+        --header='Enter abre | digite para filtrar | Esc fecha'
+}
+
+item_list() {
+    local category=${1:-}
+
+    if [ -n "$category" ]; then
+        jq -r --arg category "$category" '
+            .items[] | select(.section == $category) |
+            [.name, (.description // "")] | @tsv
+        ' "$config_file"
+    else
+        jq -r '
+            .items[] | [.section, .name, (.description // "")] | @tsv
+        ' "$config_file"
+    fi
+}
+
+choose_item() {
+    local category=${1:-}
+    local selected
+    local section_name
+    local item_name
+
+    if [ -n "$category" ]; then
+        selected=$(item_list "$category" | fzf "${fzf_options[@]}" \
+            --border-label=" $category " \
+            --header='Enter seleciona | Esc volta') || return 1
+        item_name=${selected%%$'\t'*}
+        jq -c --arg category "$category" --arg name "$item_name" \
+            '.items[] | select(.section == $category and .name == $name)' "$config_file"
+    else
+        selected=$(item_list | fzf "${fzf_options[@]}" \
+            --border-label=' Busca global ' \
+            --header='Enter seleciona | Esc volta') || return 1
+        IFS=$'\t' read -r section_name item_name _ <<< "$selected"
+        jq -c --arg category "$section_name" --arg name "$item_name" \
+            '.items[] | select(.section == $category and .name == $name)' "$config_file"
+    fi
+}
+
+choose_action() {
+    local item=$1
+    local name
+    local actions
+    local action
+
+    name=$(jq -r '.name' <<< "$item")
+    actions=$(jq -r '.actions[]' <<< "$item")
+    action=$(printf '%s\n' "$actions" | while IFS= read -r value; do
+        case "$value" in
+            tab) printf 'Nova aba\n' ;;
+            popup) printf 'Popup\n' ;;
+        esac
+    done | fzf "${fzf_options[@]}" \
+        --border-label=" $name " \
+        --header='Escolha como abrir | Esc volta') || return 1
+
+    case "$action" in
+        'Nova aba') printf 'tab\n' ;;
+        'Popup') printf 'popup\n' ;;
+    esac
+}
+
+open_item() {
+    local item=$1
+    local action=$2
+    local cwd
+    local layout
+    local command
+    local wait
+    local kind
+
+    cwd=$(jq -r '.cwd // empty' <<< "$item")
+    cwd=${cwd:-$PWD}
+    layout=$(jq -r '.layout // empty' <<< "$item")
+    command=$(jq -r '.command // empty' <<< "$item")
+    wait=$(jq -r '.wait // false' <<< "$item")
+    kind=$(jq -r '.kind // empty' <<< "$item")
+
+    if [ "$kind" = "zoxide" ]; then
+        if ! command -v zoxide >/dev/null 2>&1; then
+            printf '%sAviso:%s zoxide nao esta instalado.\n' "$section" "$reset"
+            pause
+            return
+        fi
+        cwd=$(zoxide query -l | fzf "${fzf_options[@]}" \
+            --border-label=' Diretorios recentes ' \
+            --header='Enter escolhe o diretorio | Esc volta') || return
+    fi
+
+    if [ "$action" = "tab" ]; then
+        if [ -n "$layout" ]; then
+            zellij action new-tab --layout "$layout" --cwd "$cwd"
+        elif [ -n "$command" ]; then
+            zellij action new-tab --cwd "$cwd" -- bash -lc "$command"
+        else
+            zellij action new-tab --cwd "$cwd"
+        fi
+        return
+    fi
+
+    if [ "$action" = "popup" ]; then
+        command=${command:-bash}
+        if [ "$wait" = "true" ]; then
+            command="$command; printf '\\nPressione Enter para fechar...'; read -r _"
+        fi
+        zellij action new-pane --floating --close-on-exit \
+            --cwd "$cwd" --width 80% --height 80% -- \
+            bash -lc "$command"
+    fi
+}
+
+while true; do
+    choice=$(main_menu) || exit 0
+
+    case "$choice" in
+        'Buscar tudo')
+            item=$(choose_item) || continue
+            ;;
+        'Sessoes')
+            zellij action launch-or-focus-plugin session-manager --floating --move-to-focused-tab
+            exit 0
+            ;;
+        'Ajuda')
+            exec env MUX_HELP_WAIT=1 "{{ .chezmoi.homeDir }}/.config/zellij/mux-help" zellij
+            ;;
+        'Editar configuracao')
+            "${EDITOR:-nvim}" "$config_file"
+            continue
+            ;;
+        *)
+            item=$(choose_item "$choice") || continue
+            ;;
+    esac
+
+    action=$(choose_action "$item") || continue
+    open_item "$item" "$action"
+    exit 0
+done
