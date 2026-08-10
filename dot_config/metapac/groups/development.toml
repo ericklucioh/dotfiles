@@ -20,3 +20,9 @@ packages = [
   "ripgrep",
   "zellij",
 ]
+
+[npm]
+packages = [
+  "@openai/codex",
+  "opencode-ai",
+]

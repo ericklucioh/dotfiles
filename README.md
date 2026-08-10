@@ -21,6 +21,9 @@ applies this repository's files, and runs `metapac sync`. It never runs
 - `scripts/`: helper scripts that must be run explicitly.
 - `.chezmoidata.toml`: values used by machine-specific templates.
 
+The `opencode` and `codex` CLI tools are installed through npm. TTT is
+installed through Go because metapac does not currently provide a Go backend.
+
 The `fedora.toml` group configures Microsoft's official repository through a
 hook before installing the `code` RPM package. It also assumes that RPM Fusion
 is already configured. The NVIDIA driver is excluded from the initial sync to

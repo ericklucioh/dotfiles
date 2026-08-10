@@ -6,6 +6,7 @@ packages = [
   "git",
   "htop",
   "jq",
+  "micro",
   "neovim",
   "tree",
   "unzip",

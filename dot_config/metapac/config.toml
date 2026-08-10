@@ -1,4 +1,4 @@
-enabled_backends = ["dnf", "flatpak", "cargo"]
+enabled_backends = ["dnf", "flatpak", "cargo", "npm"]
 
 # Keep all group files active until multiple machines need different profiles.
 hostname_groups_enabled = false

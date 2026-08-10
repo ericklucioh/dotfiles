@@ -6,7 +6,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 LOCAL_BIN="$HOME/.local/bin"
-export PATH="$LOCAL_BIN:$HOME/.cargo/bin:$PATH"
+export PATH="$LOCAL_BIN:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
 
 mkdir -p "$LOCAL_BIN"
 
@@ -28,5 +28,17 @@ fi
 chezmoi --source "$REPO_DIR" init --guess-repo-url=false
 chezmoi --source "$REPO_DIR" apply
 
+# Enable RPM Fusion before synchronizing Fedora packages.
+sudo dnf install \
+    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+
+# Add Flathub before synchronizing Flatpak applications.
+sudo flatpak remote-add --system --if-not-exists flathub \
+    https://dl.flathub.org/repo/flathub.flatpakrepo
+
 # Packages are declared by chezmoi before they are synchronized.
 metapac sync
+
+# metapac has no Go backend; TTT is installed using its official Go package.
+bash "$REPO_DIR/scripts/install-go-tools.sh"
