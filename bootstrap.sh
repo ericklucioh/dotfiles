@@ -9,6 +9,7 @@ LOCAL_BIN="$HOME/.local/bin"
 export PATH="$LOCAL_BIN:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
 
 mkdir -p "$LOCAL_BIN"
+mkdir -p "$HOME/.local/lib/node_modules"
 
 if ! command -v chezmoi >/dev/null 2>&1; then
     curl -fsSL https://get.chezmoi.io | sh -s -- -b "$LOCAL_BIN"
@@ -36,6 +37,9 @@ sudo dnf install \
 # Add Flathub before synchronizing Flatpak applications.
 sudo flatpak remote-add --system --if-not-exists flathub \
     https://dl.flathub.org/repo/flathub.flatpakrepo
+
+# Cargo builds may need Perl's core modules before metapac processes its backends.
+sudo dnf install perl
 
 # Packages are declared by chezmoi before they are synchronized.
 metapac sync
