@@ -1,0 +1,14 @@
+[dnf]
+packages = [
+  "btop",
+  "curl",
+  "fzf",
+  "git",
+  "htop",
+  "jq",
+  "neovim",
+  "tree",
+  "unzip",
+  "vim",
+  "wget",
+]

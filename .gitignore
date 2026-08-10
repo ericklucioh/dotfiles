@@ -1,0 +1,6 @@
+# Never commit credentials or machine-local state.
+.chezmoidata.local.toml
+*.secret
+*.private
+.env
+.env.*

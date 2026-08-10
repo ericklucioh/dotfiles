@@ -1,0 +1,18 @@
+# Fedora-specific packages. RPM Fusion must be configured before syncing this
+# group. The full FFmpeg replacement is intentionally handled separately.
+[dnf]
+packages = [
+  {
+    name = "code",
+    hooks = {
+      before_install = [
+        "sudo",
+        "bash",
+        "-c",
+        "tmp=$(mktemp /tmp/vscode.repo.XXXXXX) && trap 'rm -f \"$tmp\"' EXIT && rpm --import https://packages.microsoft.com/keys/microsoft.asc && curl -fsSL https://packages.microsoft.com/yumrepos/vscode/config.repo -o \"$tmp\" && install -m 644 \"$tmp\" /etc/yum.repos.d/vscode.repo"
+      ]
+    }
+  },
+  "p7zip",
+  "p7zip-plugins",
+]

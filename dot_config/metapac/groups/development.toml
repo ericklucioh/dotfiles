@@ -1,0 +1,22 @@
+[dnf]
+packages = [
+  "gcc",
+  "gcc-c++",
+  "gh",
+  "golang",
+  "make",
+  "nodejs",
+  "npm",
+  "podman-compose",
+  "python3",
+  "python3-pip",
+  "toolbox",
+  "uv",
+]
+
+[cargo]
+packages = [
+  "fd-find",
+  "ripgrep",
+  "zellij",
+]

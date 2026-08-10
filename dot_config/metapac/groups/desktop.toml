@@ -1,0 +1,6 @@
+# Keep graphical applications here so a server can reuse the base profile.
+[flatpak]
+packages = [
+  "com.discordapp.Discord",
+  "com.spotify.Client",
+]

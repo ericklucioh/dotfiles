@@ -1,0 +1,7 @@
+# Personal shell configuration managed by chezmoi.
+
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+
+alias ll='ls -lah'
+alias la='ls -A'
+alias l='ls -CF'
