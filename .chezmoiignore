@@ -1,0 +1,8 @@
+# Ignore repository contents by default. Patterns are matched against the
+# destination names produced by ChezMoi, not the `dot_` source names.
+*
+!.bashrc
+!.XCompose
+!.npmrc
+!.config/
+!.config/**
