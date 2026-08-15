@@ -5,3 +5,6 @@ export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
 alias ll='ls -lah'
 alias la='ls -A'
 alias l='ls -CF'
+
+[ -f /etc/bashrc ] && . /etc/bashrc
+[ -f "$HOME/.bashrc.local" ] && . "$HOME/.bashrc.local"

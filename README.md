@@ -10,6 +10,13 @@ The script has not been executed yet. After reviewing the package groups:
 ./bootstrap.sh
 ```
 
+Depois da instalação inicial, para aplicar alterações:
+
+```bash
+chezmoi apply
+metapac sync
+```
+
 It installs `chezmoi`, Rust through `rustup`, and `metapac` through Cargo,
 applies this repository's files, and runs `metapac sync`. It never runs
 `metapac clean`.
@@ -28,6 +35,28 @@ The `fedora.toml` group configures Microsoft's official repository through a
 hook before installing the `code` RPM package. It also assumes that RPM Fusion
 is already configured. The NVIDIA driver is excluded from the initial sync to
 avoid installing a machine-specific module without review.
+
+The same group configures Docker's official Fedora repository and installs
+Docker Engine, Buildx, and Compose. Its `after_install` hook enables and starts
+the Docker service. To run Docker without `sudo`, add the current user to the
+Docker group and start a new login session:
+
+```bash
+sudo usermod -aG docker "$USER"
+newgrp docker
+docker run hello-world
+docker compose version
+```
+
+The Fedora group also installs PostgreSQL and MySQL, but neither database
+service is enabled or started automatically.
+
+## Links
+
+- Metapac oficial: <https://github.com/ripytide/metapac>
+- Meu fork: <https://github.com/ericklucioh/dotfiles>
+- Repositório oficial do Docker para Fedora: <https://download.docker.com/linux/fedora/docker-ce.repo>
+- Documentação oficial de instalação do Docker: <https://docs.docker.com/engine/install/fedora/>
 
 The `ffmpeg-libs` package is not included because it conflicts with
 `libswscale-free` on Fedora 44. A complete replacement with RPM Fusion's FFmpeg

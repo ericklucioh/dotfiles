@@ -13,6 +13,39 @@ packages = [
       ]
     }
   },
+  {
+    name = "docker-ce",
+    hooks = {
+      before_install = [
+        "sudo",
+        "bash",
+        "-c",
+        "tmp=$(mktemp /tmp/docker-ce.repo.XXXXXX) && trap 'rm -f \"$tmp\"' EXIT && rpm --import https://download.docker.com/linux/fedora/gpg && curl -fsSL https://download.docker.com/linux/fedora/docker-ce.repo -o \"$tmp\" && install -m 644 \"$tmp\" /etc/yum.repos.d/docker-ce.repo"
+      ],
+      after_install = [
+        "bash",
+        "-c",
+        "sudo systemctl enable --now docker && sudo usermod -aG docker \"$USER\""
+      ]
+    }
+  },
+  "docker-ce-cli",
+  "containerd.io",
+  "docker-buildx-plugin",
+  "docker-compose-plugin",
+  {
+    name = "postgresql-server",
+    hooks = {
+      after_install = [
+        "sudo",
+        "postgresql-setup",
+        "--initdb",
+        "--unit",
+        "postgresql"
+      ]
+    }
+  },
+  "mysql-server",
   "p7zip",
   "p7zip-plugins",
 ]
