@@ -18,6 +18,7 @@ packages = [
 [cargo]
 packages = [
   "fd-find",
+  "git-delta",
   "ripgrep",
   { name = "zellij", options = { locked = true } },
 ]
