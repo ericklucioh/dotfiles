@@ -4,7 +4,8 @@ Declarative Fedora configuration using `chezmoi`, `metapac`, and Bash.
 
 ## Bootstrap
 
-The script has not been executed yet. After reviewing the package groups:
+The script has already been executed on this machine (RPM Fusion, Flathub,
+and Docker are configured). To reproduce the setup on a new machine:
 
 ```bash
 ./bootstrap.sh
