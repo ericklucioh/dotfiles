@@ -2,6 +2,7 @@
 # destination names produced by ChezMoi, not the `dot_` source names.
 *
 !.bashrc
+!.gitconfig
 !.XCompose
 !.npmrc
 !.config/

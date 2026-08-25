@@ -1,0 +1,27 @@
+[user]
+	name = {{ .git_name }}
+	email = {{ .git_email }}
+[alias]
+	s = switch
+	sb = switch -c
+[core]
+	hooksPath = ~/.git_hooks
+	pager = delta
+[init]
+	defaultBranch = main
+[pull]
+	rebase = false
+[credential "https://github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+[merge]
+	conflictStyle = zdiff3
+[pager]
+	diff = diffnav

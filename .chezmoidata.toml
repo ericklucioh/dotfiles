@@ -1,4 +1,3 @@
-# Add machine-specific values here instead of hard-coding them in templates.
-# Example:
-# git_name = "ErickLucioh"
-# git_email = "you@example.com"
+# Machine-specific values used by templates.
+git_name = "ErickLucioh"
+git_email = "ericklucioh@gmail.com"
