@@ -1,0 +1,29 @@
+[Unit]
+Description=AI Memory persistent service
+Requires=ai-memory-data-volume.service
+After=ai-memory-data-volume.service
+
+[Container]
+Image=docker.io/akitaonrails/ai-memory:latest
+ContainerName=ai-memory
+Exec=serve --transport http --bind 0.0.0.0:49374 --enable-web
+EnvironmentFile=%h/.config/ai-memory/env
+Volume=ai-memory-data.volume:/data
+PublishPort=127.0.0.1:49375:49374
+HealthCmd=/usr/local/bin/ai-memory status
+HealthInterval=30s
+HealthTimeout=10s
+HealthRetries=3
+HealthStartPeriod=15s
+HealthOnFailure=kill
+Notify=healthy
+NoNewPrivileges=true
+StopSignal=SIGTERM
+StopTimeout=10
+
+[Service]
+Restart=on-failure
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

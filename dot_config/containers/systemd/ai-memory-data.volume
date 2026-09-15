@@ -1,0 +1,9 @@
+[Unit]
+Description=Persistent volume for AI Memory
+
+[Volume]
+VolumeName=ai-memory-data
+Label=io.erick.managed=ai-memory
+
+[Install]
+WantedBy=default.target

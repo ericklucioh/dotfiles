@@ -26,6 +26,7 @@ The final setup will use these repository paths through chezmoi:
 dot_config/containers/systemd/ai-memory.container
 dot_config/containers/systemd/ai-memory-data.volume
 dot_config/ai-memory/env.example
+dot_bashrc.local
 dot_local/bin/executable_ai-memory-engine
 scripts/install-ai-memory-wrapper.sh
 scripts/migrate-ai-memory-to-podman.sh
