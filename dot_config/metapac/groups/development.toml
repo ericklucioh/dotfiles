@@ -8,6 +8,7 @@ packages = [
   "nodejs",
   "npm",
   "perl",
+  "podman",
   "podman-compose",
   "python3",
   "python3-pip",
