@@ -58,7 +58,6 @@ install_vocalinux() {
 
     local installer
     installer=$(mktemp /tmp/vocalinux-install.XXXXXX.sh)
-    trap 'rm -f "$installer"' RETURN
     curl --fail --location --retry 3 --silent --show-error "$INSTALLER_URL" -o "$installer"
     verify_file "$INSTALLER_SHA256" "$installer"
 
@@ -69,6 +68,7 @@ install_vocalinux() {
         CUDAToolkit_ROOT=/usr/local/cuda \
         bash "$installer" --auto --engine=whisper_cpp --rebuild-whispercpp \
             --skip-system-deps --tag="$VOCALINUX_TAG"
+    rm -f -- "$installer"
 }
 
 install_model() {
@@ -86,7 +86,6 @@ install_model() {
 
     local temporary_model
     temporary_model=$(mktemp "${MODEL_DIR}/.${MODEL_NAME}.XXXXXX")
-    trap 'rm -f "$temporary_model"' RETURN
     curl --fail --location --retry 3 --silent --show-error "$MODEL_URL" -o "$temporary_model"
     verify_file "$MODEL_SHA256" "$temporary_model"
     chmod 0644 "$temporary_model"
