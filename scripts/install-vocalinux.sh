@@ -12,6 +12,9 @@ readonly MODEL_REVISION="5359861c739e955e79d9a303bcbc70fb988958b1"
 readonly MODEL_NAME="large-v3-turbo-q5_0"
 readonly MODEL_SHA256="394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2"
 readonly MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/${MODEL_REVISION}/ggml-${MODEL_NAME}.bin"
+readonly PYWHISPERCPP_VERSION="1.5.0"
+readonly CUDA_ROOT="/usr/local/cuda"
+readonly CUDA_ARCHITECTURE="86-real"
 
 readonly DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/vocalinux"
 readonly MODEL_DIR="${DATA_DIR}/models/whispercpp"
@@ -30,6 +33,31 @@ require_command() {
     command -v "$1" >/dev/null 2>&1 || die "missing command '$1'; run ./bootstrap.sh first"
 }
 
+venv_python() {
+    printf '%s\n' "$HOME/.local/share/vocalinux/venv/bin/python"
+}
+
+cuda_backend_installed() {
+    local site_packages
+    [[ -x "$(venv_python)" ]] || return 1
+    site_packages=$("$(venv_python)" -c 'import sysconfig; print(sysconfig.get_path("platlib"))')
+    find "$site_packages" -maxdepth 3 -type f -name 'libggml-cuda.so*' -print -quit 2>/dev/null | grep -q .
+}
+
+validate_cuda_toolkit() {
+    require_command nvidia-smi
+    require_command nvcc
+    local smi_output
+    smi_output=$(nvidia-smi 2>&1) || die "NVIDIA driver is installed but nvidia-smi cannot access the GPU"
+    grep -q 'ERR!' <<<"$smi_output" \
+        && die "NVIDIA driver reports a GPU error; reboot before building the CUDA backend"
+    [[ -x "$CUDA_ROOT/bin/nvcc" ]] || die "CUDA compiler is missing at $CUDA_ROOT/bin/nvcc"
+    [[ -f "$CUDA_ROOT/targets/x86_64-linux/include/cuda_runtime.h" ]] \
+        || die "CUDA headers are missing under $CUDA_ROOT"
+    compgen -G "$CUDA_ROOT/targets/x86_64-linux/lib/libcudart.so*" >/dev/null \
+        || die "CUDA runtime library is missing under $CUDA_ROOT"
+}
+
 verify_file() {
     local expected="$1"
     local file="$2"
@@ -43,18 +71,17 @@ install_vocalinux() {
         installed_version=$("$HOME/.local/share/vocalinux/venv/bin/vocalinux" --version 2>/dev/null || true)
     fi
     if [[ "$installed_version" == "$VOCALINUX_TAG" || "$installed_version" == "${VOCALINUX_TAG#v}" ]]; then
-        printf 'Vocalinux %s is already installed; reusing it.\n' "$VOCALINUX_TAG"
+        printf 'Vocalinux %s is already installed; keeping the application and repairing only its CUDA backend.\n' \
+            "$VOCALINUX_TAG"
         return
     fi
 
     [[ -f /etc/fedora-release ]] || die "this integration currently supports Fedora only"
     require_command curl
     require_command sha256sum
-    require_command nvcc
     require_command gcc-15
     require_command g++-15
-    [[ -f /usr/local/cuda/include/cuda_runtime.h || -f /usr/local/cuda/targets/x86_64-linux/include/cuda_runtime.h ]] \
-        || die "CUDA headers are missing; install cuda-toolkit"
+    validate_cuda_toolkit
 
     local installer
     installer=$(mktemp /tmp/vocalinux-install.XXXXXX.sh)
@@ -65,10 +92,36 @@ install_vocalinux() {
         CC=/usr/bin/gcc-15 \
         CXX=/usr/bin/g++-15 \
         CUDAHOSTCXX=/usr/bin/g++-15 \
-        CUDAToolkit_ROOT=/usr/local/cuda \
+        CUDAToolkit_ROOT="$CUDA_ROOT" \
         bash "$installer" --auto --engine=whisper_cpp --rebuild-whispercpp \
             --skip-system-deps --tag="$VOCALINUX_TAG"
     rm -f -- "$installer"
+}
+
+install_cuda_backend() {
+    validate_cuda_toolkit
+    local python
+    python=$(venv_python)
+    [[ -x "$python" ]] || die "Vocalinux virtual environment is missing: $python"
+
+    printf 'Building pywhispercpp %s with CUDA architecture %s.\n' \
+        "$PYWHISPERCPP_VERSION" "$CUDA_ARCHITECTURE"
+    PYTHONNOUSERSITE=1 \
+        CC=/usr/bin/gcc-15 \
+        CXX=/usr/bin/g++-15 \
+        CUDAHOSTCXX=/usr/bin/g++-15 \
+        CMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-15 \
+        CUDAToolkit_ROOT="$CUDA_ROOT" \
+        CMAKE_ARGS="-DGGML_CUDA=ON -DCUDAToolkit_ROOT=$CUDA_ROOT -DCMAKE_CUDA_COMPILER=$CUDA_ROOT/bin/nvcc -DCMAKE_CUDA_ARCHITECTURES=$CUDA_ARCHITECTURE -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-15" \
+        GGML_CUDA=1 \
+        NO_REPAIR=1 \
+        "$python" -m pip install --force-reinstall --no-cache-dir --no-binary=pywhispercpp \
+            "pywhispercpp==${PYWHISPERCPP_VERSION}" \
+            --verbose
+
+    cuda_backend_installed \
+        || die "pywhispercpp build completed without libggml-cuda.so; refusing CPU fallback"
+    printf 'CUDA backend verified in pywhispercpp.\n'
 }
 
 install_model() {
@@ -122,6 +175,7 @@ apply_config_defaults() {
 
 main() {
     install_vocalinux
+    install_cuda_backend
     install_model
     apply_config_defaults
     printf 'Vocalinux %s is installed for Portuguese with %s and double Left Ctrl toggle.\n' \
