@@ -67,7 +67,8 @@ install_vocalinux() {
         CXX=/usr/bin/g++-15 \
         CUDAHOSTCXX=/usr/bin/g++-15 \
         CUDAToolkit_ROOT=/usr/local/cuda \
-        bash "$installer" --auto --engine=whisper_cpp --rebuild-whispercpp --tag="$VOCALINUX_TAG"
+        bash "$installer" --auto --engine=whisper_cpp --rebuild-whispercpp \
+            --skip-system-deps --tag="$VOCALINUX_TAG"
 }
 
 install_model() {
