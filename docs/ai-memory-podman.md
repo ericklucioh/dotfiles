@@ -25,6 +25,7 @@ The final setup will use these repository paths through chezmoi:
 ```text
 dot_config/containers/systemd/ai-memory.container
 dot_config/containers/systemd/ai-memory-data.volume
+dot_config/systemd/user/ai-memory-podman.target
 dot_config/ai-memory/env.example
 dot_bashrc.local
 dot_local/bin/executable_ai-memory-engine
@@ -72,9 +73,10 @@ generated plugin or any credentials.
 
 The Fedora package group declares `podman` explicitly. Rootless operation uses
 cgroups v2 and SELinux labeling. Quadlet files live under
-`~/.config/containers/systemd/`, and the generated user service is attached to
-`default.target`. Enabling user lingering is a host-level prerequisite when
-the service must start and remain available without an active login session.
+`~/.config/containers/systemd/`. A native user target attaches the generated
+service to `default.target`; this avoids trying to enable a generated Quadlet
+unit directly. Enabling user lingering is a host-level prerequisite when the
+service must start and remain available without an active login session.
 
 ## Sources
 

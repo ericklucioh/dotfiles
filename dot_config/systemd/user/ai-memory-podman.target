@@ -1,0 +1,7 @@
+[Unit]
+Description=AI Memory rootless Podman runtime
+Requires=ai-memory.service
+After=ai-memory.service
+
+[Install]
+WantedBy=default.target
