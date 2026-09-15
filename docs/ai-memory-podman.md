@@ -44,7 +44,48 @@ runtime copies remain local; the installer command, endpoint, and ownership
 are documented here so they can be recreated without committing generated
 state or credentials.
 
-## Migration safety
+## Operational workflow
+
+`bootstrap.sh` and `chezmoi apply` install files only. They do not start the
+service, enable lingering, move data, install the upstream wrapper, or modify
+OpenCode. Run these operations explicitly from the repository:
+
+### New host without existing data
+
+```bash
+chezmoi apply
+scripts/ai-memory/install-wrapper.sh
+scripts/ai-memory/setup.sh
+scripts/ai-memory/install-opencode2.sh
+opencode2 service restart
+```
+
+### Host with an existing Docker deployment
+
+Stop the Docker AI Memory container first, leave its volume untouched, and run
+the guarded migration. The target Podman volume must not already exist:
+
+```bash
+chezmoi apply
+scripts/ai-memory/install-wrapper.sh
+scripts/ai-memory/migrate-from-docker.sh
+scripts/ai-memory/setup.sh
+scripts/ai-memory/install-opencode2.sh
+opencode2 service restart
+```
+
+### Routine operations
+
+```bash
+scripts/ai-memory/health.sh
+scripts/ai-memory/status.sh
+systemctl --user restart ai-memory.service
+```
+
+`setup.sh` may be run again after applying Quadlet changes. It is idempotent
+and re-establishes the user target, linger, service, and health checks.
+
+## Migration and data safety
 
 The Docker volume is the source of truth until all Podman checks pass. The
 migration must create a backup, copy into a separate Podman volume, compare
@@ -54,6 +95,41 @@ Docker container or volume is deliberately excluded from the initial cutover.
 Rollback means stopping the Podman service and restoring the original Docker
 deployment against its unchanged `ai-memory-data` volume. The backup archive
 must remain available until rollback is no longer required.
+
+### Backup
+
+Backups require the service to be stopped so SQLite WAL data is consistent:
+
+```bash
+systemctl --user stop ai-memory.service
+scripts/ai-memory/backup.sh
+scripts/ai-memory/setup.sh
+```
+
+The command writes a `.tar.gz` archive plus adjacent archive and file-list
+checksums under `~/Backups/ai-memory/` by default.
+
+### Restore
+
+Restore always targets a new volume and refuses to overwrite an existing one:
+
+```bash
+scripts/ai-memory/restore.sh \
+  --archive ~/Backups/ai-memory/ai-memory-podman-YYYYMMDDTHHMMSSZ.tar.gz \
+  --volume ai-memory-restore-review
+```
+
+The restored volume is validated but is not silently swapped into production.
+Switching production data requires a deliberate service stop, volume review,
+and an operator-approved rollback point.
+
+### Rollback to Docker
+
+If the Podman service must be abandoned, stop it and start the preserved Docker
+deployment against its original `ai-memory-data` volume. Do not remove the
+Podman volume or Docker volume while diagnosing the rollback. After the issue
+is resolved, stop Docker and run `scripts/ai-memory/setup.sh` to return to the
+Podman service.
 
 ## Rebuild order
 
@@ -69,7 +145,7 @@ must remain available until rollback is no longer required.
 7. Restart OpenCode 2 and verify a real hook observation and MCP recall.
 
 The repeatable OpenCode 2 wiring command is
-`scripts/install-ai-memory-opencode2.sh`. It uses the upstream idempotent
+`scripts/ai-memory/install-opencode2.sh`. It uses the upstream idempotent
 installer, which keeps the V1 and V2 MCP entries compatible and regenerates
 `~/.config/opencode/plugins/ai-memory-opencode2.ts` without committing the
 generated plugin or any credentials.

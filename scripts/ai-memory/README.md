@@ -16,8 +16,8 @@ scripts/ai-memory/status.sh
 
 `setup.sh` is idempotent. It verifies rootless Podman, creates the ignored
 `~/.config/ai-memory/env` file when absent, enables user lingering, reloads
-Quadlet, and enables/starts the AI Memory target and service. It only accepts the local
-endpoint `http://127.0.0.1:49375`.
+Quadlet, and enables/starts the AI Memory target and service. It only accepts
+the local endpoint `http://127.0.0.1:49375`.
 
 Data-moving operations and OpenCode 2 integration have separate entry points:
 
@@ -42,4 +42,5 @@ Stop the service directly before a consistent backup; stopping only the
 aggregate target does not necessarily stop its required generated service.
 
 Migration, restore, and integration scripts are explicit and are never called
-by `bootstrap.sh`, `chezmoi apply`, or `setup.sh`.
+by `bootstrap.sh`, `chezmoi apply`, or `setup.sh`. Backup archives and their
+checksum sidecars belong outside Git.
