@@ -43,7 +43,7 @@ docker run --rm \
 
 [[ -s "$archive" ]]
 gzip -t "$archive"
-if ! tar -tzf "$archive" | grep -Eq '(^|/)db/memory\.sqlite$'; then
+if ! tar -tzf "$archive" | grep -E '(^|/)db/memory\.sqlite$' >/dev/null; then
     printf 'Backup does not contain db/memory.sqlite; refusing import.\n' >&2
     exit 1
 fi
