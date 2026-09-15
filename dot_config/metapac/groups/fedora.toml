@@ -29,6 +29,11 @@ packages = [
   },
   "gcc15",
   "gcc15-c++",
+  # NVIDIA's kernel module and CUDA userspace are machine-specific, but this
+  # workstation requires them for Vocalinux GPU acceleration. RPM Fusion must
+  # be enabled by bootstrap before metapac syncs these packages.
+  "akmod-nvidia",
+  "xorg-x11-drv-nvidia-cuda",
   "ibus-devel",
   "gobject-introspection-devel",
   "python3-devel",

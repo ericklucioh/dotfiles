@@ -21,8 +21,10 @@ metapac sync
 ### Vocalinux
 
 O bootstrap instala o Vocalinux `v0.16.2` usando o engine local `whisper.cpp`.
-No Fedora, o grupo de pacotes declara o toolkit CUDA e GCC 15 para compilar o
-backend da RTX sem substituir o compilador padrão do sistema. O script baixa o
+No Fedora, o grupo de pacotes declara o driver NVIDIA via RPM Fusion, toolkit
+CUDA e GCC 15 para compilar o backend da RTX sem substituir o compilador padrão
+do sistema. Após a primeira instalação do driver, reinicie o sistema para o
+módulo `akmod-nvidia` ser carregado. O script baixa o
 instalador oficial e o modelo `large-v3-turbo-q5_0` com SHA-256 fixado; os
 binários e modelos ficam em `~/.local/share/vocalinux`, nunca no repositório.
 
