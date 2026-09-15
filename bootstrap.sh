@@ -51,5 +51,10 @@ sudo dnf install perl
 # Packages are declared by chezmoi before they are synchronized.
 metapac sync
 
+# Install Vocalinux after metapac provides CUDA, GCC 15, and Fedora runtime
+# dependencies. The helper is idempotent and keeps application data outside
+# the repository.
+bash "$REPO_DIR/scripts/install-vocalinux.sh"
+
 # metapac has no Go backend; TTT is installed using its official Go package.
 bash "$REPO_DIR/scripts/install-go-tools.sh"
