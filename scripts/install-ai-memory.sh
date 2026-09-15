@@ -16,10 +16,10 @@ mkdir -p "$LOCAL_BIN" "$CONFIG_DIR" "$TEMP_ROOT"
 work_dir="$(mktemp -d "${TEMP_ROOT}/ai-memory-install.XXXXXX")"
 trap 'rm -rf "$work_dir"' EXIT
 
-curl -fsSL "$WRAPPER_BASE" -o "$work_dir/ai-memory"
-curl -fsSL "$WRAPPER_BASE.sha256" -o "$work_dir/ai-memory.sha256"
-(cd "$work_dir" && sha256sum -c ai-memory.sha256)
-install -m 0755 "$work_dir/ai-memory" "$LOCAL_BIN/ai-memory"
+curl -fsSL "$WRAPPER_BASE" -o "$work_dir/ai-memory-wrapper"
+curl -fsSL "$WRAPPER_BASE.sha256" -o "$work_dir/ai-memory-wrapper.sha256"
+(cd "$work_dir" && sha256sum -c ai-memory-wrapper.sha256)
+install -m 0755 "$work_dir/ai-memory-wrapper" "$LOCAL_BIN/ai-memory"
 
 if [[ ! -e "$CONFIG_DIR/env" ]]; then
     install -m 0600 "$CONFIG_DIR/env.example" "$CONFIG_DIR/env"
