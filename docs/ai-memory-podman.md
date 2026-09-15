@@ -29,9 +29,12 @@ dot_config/systemd/user/ai-memory-podman.target
 dot_config/ai-memory/env.example
 dot_bashrc.local
 dot_local/bin/executable_ai-memory-engine
-scripts/install-ai-memory.sh
-scripts/migrate-ai-memory-to-podman.sh
-scripts/install-ai-memory-opencode2.sh
+scripts/ai-memory/install-wrapper.sh
+scripts/ai-memory/migrate-from-docker.sh
+scripts/ai-memory/install-opencode2.sh
+scripts/ai-memory/backup.sh
+scripts/ai-memory/restore.sh
+scripts/ai-memory/setup.sh
 docs/ai-memory-podman.md
 ```
 
@@ -55,12 +58,14 @@ must remain available until rollback is no longer required.
 ## Rebuild order
 
 1. Apply this repository with chezmoi.
-2. Install the checksum-verified AI Memory wrapper and create the local env
-   file from `env.example` if it does not exist.
-3. Create the rootless Podman volume and restore the verified backup.
-4. Reload and start the generated Quadlet user service.
+2. Install the checksum-verified AI Memory wrapper with
+   `scripts/ai-memory/install-wrapper.sh`.
+3. Create the rootless Podman volume and restore the verified backup, or run
+   the explicit Docker migration command on an existing Docker installation.
+4. Run `scripts/ai-memory/setup.sh` to reload and start the Quadlet runtime.
 5. Verify the loopback endpoint, health, volume persistence, and restart.
-6. Generate the OpenCode 2 MCP and plugin integration against port 49375.
+6. Run `scripts/ai-memory/install-opencode2.sh` to generate the OpenCode 2 MCP
+   and plugin integration against port 49375.
 7. Restart OpenCode 2 and verify a real hook observation and MCP recall.
 
 The repeatable OpenCode 2 wiring command is

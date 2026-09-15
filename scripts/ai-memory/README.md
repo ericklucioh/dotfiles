@@ -16,7 +16,7 @@ scripts/ai-memory/status.sh
 
 `setup.sh` is idempotent. It verifies rootless Podman, creates the ignored
 `~/.config/ai-memory/env` file when absent, enables user lingering, reloads
-Quadlet, and enables/starts `ai-memory.service`. It only accepts the local
+Quadlet, and enables/starts the AI Memory target and service. It only accepts the local
 endpoint `http://127.0.0.1:49375`.
 
 Data-moving operations and OpenCode 2 integration have separate entry points:
