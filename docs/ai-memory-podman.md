@@ -28,8 +28,9 @@ dot_config/containers/systemd/ai-memory-data.volume
 dot_config/ai-memory/env.example
 dot_bashrc.local
 dot_local/bin/executable_ai-memory-engine
-scripts/install-ai-memory-wrapper.sh
+scripts/install-ai-memory.sh
 scripts/migrate-ai-memory-to-podman.sh
+scripts/install-ai-memory-opencode2.sh
 docs/ai-memory-podman.md
 ```
 
@@ -60,6 +61,12 @@ must remain available until rollback is no longer required.
 5. Verify the loopback endpoint, health, volume persistence, and restart.
 6. Generate the OpenCode 2 MCP and plugin integration against port 49375.
 7. Restart OpenCode 2 and verify a real hook observation and MCP recall.
+
+The repeatable OpenCode 2 wiring command is
+`scripts/install-ai-memory-opencode2.sh`. It uses the upstream idempotent
+installer, which keeps the V1 and V2 MCP entries compatible and regenerates
+`~/.config/opencode/plugins/ai-memory-opencode2.ts` without committing the
+generated plugin or any credentials.
 
 ## Host prerequisites
 
