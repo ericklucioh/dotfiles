@@ -1,0 +1,20 @@
+{
+  "speech_recognition": {
+    "engine": "whisper_cpp",
+    "language": "pt",
+    "model_size": "large-v3-turbo-q5_0",
+    "whisper_cpp_model_size": "large-v3-turbo-q5_0",
+    "voice_commands_enabled": false
+  },
+  "shortcuts": {
+    "toggle_recognition": "left_ctrl+left_ctrl",
+    "mode": "toggle"
+  },
+  "ui": {
+    "start_minimized": true
+  },
+  "general": {
+    "autostart": true,
+    "first_run": false
+  }
+}

@@ -17,7 +17,7 @@ readonly DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/vocalinux"
 readonly MODEL_DIR="${DATA_DIR}/models/whispercpp"
 readonly MODEL_FILE="${MODEL_DIR}/ggml-${MODEL_NAME}.bin"
 readonly CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/vocalinux/config.json"
-readonly DEFAULTS_FILE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/dot_config/vocalinux/config.defaults.json"
+readonly DEFAULTS_FILE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/vocalinux-config.defaults.json"
 
 export PATH="/usr/local/cuda/bin:$PATH"
 
@@ -108,7 +108,14 @@ apply_config_defaults() {
     fi
 
     temporary_config=$(mktemp "${config_dir}/.config.json.XXXXXX")
-    jq -s '.[0] * .[1]' "$CONFIG_FILE" "$DEFAULTS_FILE" >"$temporary_config"
+    jq -s '
+        .[0] as $existing | .[1] as $defaults |
+        $existing
+        | .speech_recognition = ((.speech_recognition // {}) * $defaults.speech_recognition)
+        | .shortcuts = ((.shortcuts // {}) * $defaults.shortcuts)
+        | .ui = ((.ui // {}) * $defaults.ui)
+        | .general = ((.general // {}) * $defaults.general)
+    ' "$CONFIG_FILE" "$DEFAULTS_FILE" >"$temporary_config"
     chmod 0600 "$temporary_config"
     mv -- "$temporary_config" "$CONFIG_FILE"
 }
