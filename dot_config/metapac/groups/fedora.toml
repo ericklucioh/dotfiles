@@ -34,7 +34,7 @@ packages = [
   "python3-devel",
   "portaudio-devel",
   "python3-virtualenv",
-  "pkg-config",
+  "pkgconf-pkg-config",
   "cmake",
   "wget",
   "vulkan-tools",
