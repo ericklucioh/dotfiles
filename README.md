@@ -18,6 +18,42 @@ chezmoi apply
 metapac sync
 ```
 
+### Vocalinux
+
+O bootstrap instala o Vocalinux `v0.16.2` usando o engine local `whisper.cpp`.
+No Fedora, o grupo de pacotes declara o toolkit CUDA e GCC 15 para compilar o
+backend da RTX sem substituir o compilador padrão do sistema. O script baixa o
+instalador oficial e o modelo `large-v3-turbo-q5_0` com SHA-256 fixado; os
+binários e modelos ficam em `~/.local/share/vocalinux`, nunca no repositório.
+
+Após `./bootstrap.sh`, o app fica configurado para:
+
+- reconhecer português (`pt`);
+- usar `large-v3-turbo-q5_0`;
+- alternar gravação com dois toques no Ctrl esquerdo;
+- iniciar minimizado no login;
+- preservar configurações locais de áudio ao reaplicar Chezmoi.
+
+Para aplicar somente a parte do Vocalinux depois de uma atualização:
+
+```bash
+bash scripts/install-vocalinux.sh
+chezmoi apply
+```
+
+Verificações sem gravar áudio:
+
+```bash
+vocalinux --version
+cat ~/.config/vocalinux/config.json | jq '{speech_recognition, shortcuts, general}'
+nvidia-smi
+```
+
+O processo do Vocalinux deve aparecer em `nvidia-smi` usando memória da GPU.
+Se `large-v3-turbo-q5_0` ficar lento, troque `model_size` e
+`whisper_cpp_model_size` para `medium-q5_0` em
+`scripts/vocalinux-config.defaults.json` e rode o script novamente.
+
 It installs `chezmoi`, Rust through `rustup`, and `metapac` through Cargo,
 applies this repository's files, and runs `metapac sync`. It never runs
 `metapac clean`.
