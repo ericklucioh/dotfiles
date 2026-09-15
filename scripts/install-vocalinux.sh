@@ -104,9 +104,41 @@ install_cuda_backend() {
         printf 'CUDA backend is already present in pywhispercpp; reusing it.\n'
         return
     fi
-    local python
+    local python build_root source_archive source_root
     python=$(venv_python)
     [[ -x "$python" ]] || die "Vocalinux virtual environment is missing: $python"
+    build_root=$(mktemp -d /tmp/pywhispercpp-cuda.XXXXXX)
+    "$python" -m pip download --no-binary=pywhispercpp --no-deps \
+        "pywhispercpp==${PYWHISPERCPP_VERSION}" --dest "$build_root" >/dev/null
+    source_archive=$(find "$build_root" -maxdepth 1 -type f -name 'pywhispercpp-*' -print -quit)
+    [[ -n "$source_archive" ]] || die "pywhispercpp source archive was not downloaded"
+    tar -xf "$source_archive" -C "$build_root"
+    source_root=$(find "$build_root" -mindepth 1 -maxdepth 1 -type d -name 'pywhispercpp-*' -print -quit)
+    [[ -n "$source_root" ]] || die "pywhispercpp source directory was not extracted"
+
+    # Backport ggml's iterator compatibility fix and include the CUDA iterator API.
+    (
+        cd "$source_root"
+        argsort=whisper.cpp/ggml/src/ggml-cuda/argsort.cu
+        if ! grep -q 'STRIDED_ITERATOR_AVAILABLE' "$argsort"; then
+            perl -0pi -e 's/(#    include <cub\/cub\.cuh>\n)/$1#    if (CCCL_MAJOR_VERSION >= 3 \&\& CCCL_MINOR_VERSION >= 1)\n#        define STRIDED_ITERATOR_AVAILABLE\n#    endif\n/' "$argsort"
+            perl -0pi -e 's/(static __global__ void init_indices\b.*?\n\})\n\n(#ifdef GGML_CUDA_USE_CUB)/$1\n\n#ifndef STRIDED_ITERATOR_AVAILABLE\nstatic __global__ void init_offsets(int * offsets, const int ncols, const int nrows) {\n    const int idx = blockIdx.x * blockDim.x + threadIdx.x;\n    if (idx <= nrows) {\n        offsets[idx] = idx * ncols;\n    }\n}\n#endif  \/\/ STRIDED_ITERATOR_AVAILABLE\n\n$2/s' "$argsort"
+            perl -0pi -e 's/\n    auto offset_iterator = cuda::make_strided_iterator\(cuda::make_counting_iterator\(0\), ncols\);\n/\n#    ifdef STRIDED_ITERATOR_AVAILABLE\n    auto offset_iterator = cuda::make_strided_iterator(cuda::make_counting_iterator(0), ncols);\n#    else\n    ggml_cuda_pool_alloc<int> offsets_alloc(pool, nrows + 1);\n    int *                     offset_iterator = offsets_alloc.get();\n    const dim3                offset_grid((nrows + block_size - 1) \/ block_size);\n    init_offsets<<<offset_grid, block_size, 0, stream>>>(offset_iterator, ncols, nrows);\n#    endif\n/' "$argsort"
+        fi
+        if grep -q 'STRIDED_ITERATOR_AVAILABLE' "$argsort" \
+            && ! grep -q '#        include <cuda/iterator>' "$argsort"; then
+            perl -0pi -e 's/(#        define STRIDED_ITERATOR_AVAILABLE\n)/$1#        include <cuda\/iterator>\n/' "$argsort"
+        fi
+        grep -q 'STRIDED_ITERATOR_AVAILABLE' "$argsort" || exit 1
+        grep -q '#        include <cuda/iterator>' "$argsort" || exit 1
+
+        topk=whisper.cpp/ggml/src/ggml-cuda/top-k.cu
+        if grep -q 'cuda::make_' "$topk" \
+            && ! grep -q '#        include <cuda/iterator>' "$topk"; then
+            perl -0pi -e 's/(#    include <cub\/cub\.cuh>\n)/$1#        include <cuda\/iterator>\n/' "$topk"
+        fi
+        grep -q '#        include <cuda/iterator>' "$topk" || exit 1
+    ) || die "failed to patch pywhispercpp ggml CUDA source"
 
     printf 'Building pywhispercpp %s with CUDA architecture %s.\n' \
         "$PYWHISPERCPP_VERSION" "$CUDA_ARCHITECTURE"
@@ -119,9 +151,11 @@ install_cuda_backend() {
         CMAKE_ARGS="-DGGML_CUDA=ON -DCUDAToolkit_ROOT=$CUDA_ROOT -DCMAKE_CUDA_COMPILER=$CUDA_ROOT/bin/nvcc -DCMAKE_CUDA_ARCHITECTURES=$CUDA_ARCHITECTURE -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-15" \
         GGML_CUDA=1 \
         NO_REPAIR=1 \
-        "$python" -m pip install --force-reinstall --no-cache-dir --no-binary=pywhispercpp \
-            "pywhispercpp==${PYWHISPERCPP_VERSION}" \
+        "$python" -m pip install --force-reinstall --no-cache-dir \
+            "$source_root" \
             --verbose
+
+    rm -rf -- "$build_root"
 
     cuda_backend_installed \
         || die "pywhispercpp build completed without libggml-cuda.so; refusing CPU fallback"
