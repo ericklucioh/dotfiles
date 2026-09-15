@@ -17,7 +17,7 @@ packages = [
     # Vocalinux's pywhispercpp CUDA build requires the NVIDIA toolkit. Fedora
     # 44's default GCC 16 is newer than CUDA 13.3 supports, so keep GCC 15
     # available without changing Fedora's system compiler.
-    name = "cuda-toolkit",
+    name = "cuda-toolkit-13-4",
     hooks = {
       before_install = [
         "sudo",
