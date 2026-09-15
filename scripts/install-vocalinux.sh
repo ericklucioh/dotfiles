@@ -100,6 +100,10 @@ install_vocalinux() {
 
 install_cuda_backend() {
     validate_cuda_toolkit
+    if cuda_backend_installed; then
+        printf 'CUDA backend is already present in pywhispercpp; reusing it.\n'
+        return
+    fi
     local python
     python=$(venv_python)
     [[ -x "$python" ]] || die "Vocalinux virtual environment is missing: $python"
