@@ -90,6 +90,27 @@ docker compose version
 The Fedora group also installs PostgreSQL and MySQL, but neither database
 service is enabled or started automatically.
 
+## Persistent AI Memory
+
+AI Memory is intentionally isolated from development containers: its
+persistent service runs under rootless Podman, while Docker remains available
+for development. The reproducible runtime, migration, backup, rollback, and
+OpenCode 2 integration are documented in
+[`docs/ai-memory-podman.md`](docs/ai-memory-podman.md).
+
+Applying the dotfiles only installs the declarative runtime files. It does not
+start AI Memory, enable user lingering, migrate data, or change OpenCode. Run
+the explicit operations from `scripts/ai-memory/` when the host is ready:
+
+```bash
+scripts/ai-memory/install-wrapper.sh
+scripts/ai-memory/setup.sh
+scripts/ai-memory/install-opencode2.sh
+```
+
+See [`scripts/ai-memory/README.md`](scripts/ai-memory/README.md) for backup,
+restore, migration, health, status, and rollback procedures.
+
 ## Links
 
 - Metapac oficial: <https://github.com/ripytide/metapac>

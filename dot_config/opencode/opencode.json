@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "ai-memory": {
+      "type": "remote",
+      "url": "http://127.0.0.1:49375/mcp",
+      "enabled": true
+    },
+    "servers": {
+      "ai-memory": {
+        "type": "remote",
+        "url": "http://127.0.0.1:49375/mcp",
+        "oauth": false
+      }
+    }
+  }
+}

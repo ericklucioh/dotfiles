@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Engine adapter used only by the AI Memory wrapper. Keeping this separate from
+# the `docker` command leaves Docker available for development containers.
+ENGINE="${AI_MEMORY_ENGINE:-podman}"
+
+if [[ "${1:-}" == "run" ]]; then
+    shift
+    has_network=0
+    for arg in "$@"; do
+        if [[ "$arg" == "--network" || "$arg" == "--net" || "$arg" == --network=* || "$arg" == --net=* ]]; then
+            has_network=1
+            break
+        fi
+    done
+
+    # The wrapper's helper containers need to reach the host-loopback server.
+    if (( has_network == 0 )); then
+        exec "$ENGINE" run --network host "$@"
+    fi
+    exec "$ENGINE" run "$@"
+fi
+
+exec "$ENGINE" "$@"

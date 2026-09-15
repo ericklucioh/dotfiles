@@ -1,0 +1,11 @@
+export SSH_AUTH_SOCK="$HOME/.var/app/com.bitwarden.desktop/data/.bitwarden-ssh-agent.sock"
+
+alias nvim1='NVIM_APPNAME=nvim-kickstart nvim'
+alias nvim2='NVIM_APPNAME=nvim-lazyvim nvim'
+alias nvim3='NVIM_APPNAME=nvim-astronvim nvim'
+alias nvim4='NVIM_APPNAME=nvim-nvchad nvim'
+
+# AI Memory is a persistent rootless Podman service. Docker remains the
+# default engine for ordinary development containers.
+export AI_MEMORY_SERVER_URL="${AI_MEMORY_SERVER_URL:-http://127.0.0.1:49375}"
+export AI_MEMORY_DOCKER="${AI_MEMORY_DOCKER:-$HOME/.local/bin/ai-memory-engine}"
